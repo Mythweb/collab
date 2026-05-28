@@ -11,27 +11,13 @@ const BG = {
   sam:  { doc: '#1B4332', video: '#4A1942' }
 };
 
-/* ── Persistence ──────────────────────────────── */
-const STORAGE_KEY = 'collab-ideas-v1';
-
-function saveIdeas() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas)); } catch {}
-}
-
-function loadIdeas() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-
+/* ── Ideas (source of truth: edit this file) ──── */
 const DEFAULT_IDEAS = [
   {
     id: 1,
     title: 'Brand refresh',
     type: 'doc',
     poster: 'alex',
-    viewers: ['sam'],
     content: 'Proposal to update our visual identity.\n\nNew logo direction: bold wordmark with geometric accent. Color palette shift to warmer tones — amber + deep navy.\n\nApplying across all touchpoints by Q3.'
   },
   {
@@ -39,7 +25,6 @@ const DEFAULT_IDEAS = [
     title: 'Intro reel',
     type: 'video',
     poster: 'sam',
-    viewers: [],
     content: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
   },
   {
@@ -47,7 +32,6 @@ const DEFAULT_IDEAS = [
     title: 'Feature list',
     type: 'doc',
     poster: 'alex',
-    viewers: [],
     content: 'Priority features for v2:\n\n• Offline mode\n• Push notifications\n• Dark mode polish\n• Export to PDF\n• Team mentions'
   },
   {
@@ -55,7 +39,6 @@ const DEFAULT_IDEAS = [
     title: 'Demo walkthrough',
     type: 'video',
     poster: 'alex',
-    viewers: ['sam'],
     content: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
   },
   {
@@ -63,12 +46,32 @@ const DEFAULT_IDEAS = [
     title: 'Copy deck',
     type: 'doc',
     poster: 'sam',
-    viewers: ['alex'],
     content: 'Homepage headline options:\n"Build together, faster."\n"Ideas worth sharing."\n"Where great ideas live."\n\nCTA variants:\n"Get started free"\n"See how it works"\n"Join the team"'
   }
 ];
 
-let ideas = loadIdeas() || DEFAULT_IDEAS;
+/* ── Viewers persistence (per-device, localStorage) */
+const VIEWERS_KEY = 'collab-viewers-v1';
+
+function loadViewers() {
+  try {
+    const raw = localStorage.getItem(VIEWERS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveViewers() {
+  const map = {};
+  ideas.forEach(idea => { if (idea.viewers.length) map[idea.id] = idea.viewers; });
+  try { localStorage.setItem(VIEWERS_KEY, JSON.stringify(map)); } catch {}
+}
+
+/* ── Merge ideas with saved viewer state ──────── */
+const savedViewers = loadViewers();
+let ideas = DEFAULT_IDEAS.map(idea => ({
+  ...idea,
+  viewers: savedViewers[idea.id] || []
+}));
 
 /* ── YouTube thumbnail helper ─────────────────── */
 function ytThumb(url) {
@@ -127,7 +130,7 @@ function openIdea(id) {
   const currentUser = 'sam';
   if (!idea.viewers.includes(currentUser) && idea.poster !== currentUser) {
     idea.viewers.push(currentUser);
-    saveIdeas();
+    saveViewers();
     renderGrid();
   }
 
@@ -181,42 +184,6 @@ function openIdea(id) {
   document.getElementById('idea-overlay').classList.add('open');
 }
 
-/* ── Add idea ─────────────────────────────────── */
-function openAdd() {
-  document.getElementById('add-overlay').classList.add('open');
-}
-
-function closeAdd() {
-  closeOverlay('add-overlay');
-}
-
-function addIdea() {
-  const title   = document.getElementById('new-title').value.trim();
-  const type    = document.getElementById('new-type').value;
-  const content = document.getElementById('new-content').value.trim();
-  const poster  = document.getElementById('new-poster').value;
-
-  if (!title) {
-    document.getElementById('new-title').focus();
-    return;
-  }
-
-  ideas.unshift({
-    id: Date.now(),
-    title,
-    type,
-    poster,
-    viewers: [],
-    content: content || '(no content added)'
-  });
-
-  saveIdeas();
-  renderGrid();
-  closeAdd();
-  document.getElementById('new-title').value    = '';
-  document.getElementById('new-content').value  = '';
-}
-
 /* ── Overlay helpers ──────────────────────────── */
 function closeOverlay(id) {
   document.getElementById(id).classList.remove('open');
@@ -229,9 +196,8 @@ function handleOverlayClick(e, id) {
 /* ── Status bar clock & date ──────────────────── */
 function updateClock() {
   const now = new Date();
-  const h = now.getHours();
-  const m = String(now.getMinutes()).padStart(2, '0');
-  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h   = now.getHours();
+  const m   = String(now.getMinutes()).padStart(2, '0');
   const h12 = ((h % 12) || 12);
   document.getElementById('js-time').textContent = `${h12}:${m}`;
 

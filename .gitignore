@@ -2,6 +2,9 @@
 .env
 .env.*
 
+# Claude Code (machine-specific)
+.claude/
+
 # macOS
 .DS_Store
 .AppleDouble

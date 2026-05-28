@@ -47,6 +47,13 @@ const DEFAULT_IDEAS = [
     type: 'doc',
     poster: 'sam',
     content: 'Homepage headline options:\n"Build together, faster."\n"Ideas worth sharing."\n"Where great ideas live."\n\nCTA variants:\n"Get started free"\n"See how it works"\n"Join the team"'
+  },
+  {
+    id: 6,
+    title: 'Gypsy',
+    type: 'video',
+    poster: 'sam',
+    content: 'https://www.youtube.com/embed/vLMTi49H0hM'
   }
 ];
 

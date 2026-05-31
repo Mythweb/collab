@@ -54,6 +54,13 @@ const DEFAULT_IDEAS = [
     type: 'video',
     poster: 'sam',
     content: 'https://www.youtube.com/embed/vLMTi49H0hM'
+  },
+  {
+    id: 7,
+    title: 'Merle',
+    type: 'video',
+    poster: 'sam',
+    content: 'https://www.youtube.com/embed/vU2vFp1JVnc'
   }
 ];
 
